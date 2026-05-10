@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Dashboard</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+
+</head>
+
+<body class="bg-light">
+
+    <nav class="navbar navbar-dark bg-dark">
+
+        <div class="container-fluid">
+
+            <span class="navbar-brand">
+                Team Task Manager
+            </span>
+
+            <div>
+
+                <span
+                    class="text-white me-3"
+                    id="userInfo">
+                </span>
+
+                <button
+                    class="btn btn-danger"
+                    onclick="logout()">
+
+                    Logout
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </nav>
+
+    <div class="container mt-4">
+
+        <div class="row">
+
+            <div class="col-md-4">
+
+                <div class="card shadow">
+
+                    <div class="card-body text-center">
+
+                        <h5>Total Tasks</h5>
+
+                        <h2 id="taskCount">0</h2>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="row mt-4">
+
+            <div class="col-md-6">
+
+                <div class="card shadow">
+
+                    <div class="card-body">
+
+                        <h4>Create Project</h4>
+
+                        <form id="projectForm">
+
+                            <div class="mb-3">
+
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    id="projectName"
+                                    placeholder="Project Name"
+                                    required>
+
+                            </div>
+
+                            <div class="mb-3">
+
+                                <textarea
+                                    class="form-control"
+                                    id="projectDescription"
+                                    placeholder="Description">
+                                </textarea>
+
+                            </div>
+
+                            <button
+                                type="submit"
+                                class="btn btn-primary">
+
+                                Create Project
+
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="col-md-6">
+
+                <div class="card shadow">
+
+                    <div class="card-body">
+
+                        <h4>Create Task</h4>
+
+                        <form id="taskForm">
+
+                            <div class="mb-3">
+
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    id="taskTitle"
+                                    placeholder="Task Title"
+                                    required>
+
+                            </div>
+
+                            <div class="mb-3">
+
+                                <textarea
+                                    class="form-control"
+                                    id="taskDescription"
+                                    placeholder="Task Description">
+                                </textarea>
+
+                            </div>
+
+                            <div class="mb-3">
+
+                                <input
+                                    type="number"
+                                    class="form-control"
+                                    id="assignedTo"
+                                    placeholder="Assign User ID"
+                                    required>
+
+                            </div>
+
+                            <div class="mb-3">
+
+                                <input
+                                    type="number"
+                                    class="form-control"
+                                    id="projectId"
+                                    placeholder="Project ID"
+                                    required>
+
+                            </div>
+
+                            <button
+                                type="submit"
+                                class="btn btn-success">
+
+                                Create Task
+
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="mt-5">
+
+            <h3>Your Tasks</h3>
+
+            <table class="table table-bordered bg-white">
+
+                <thead>
+
+                    <tr>
+
+                        <th>ID</th>
+                        <th>Title</th>
+                        <th>Status</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody id="taskTableBody">
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+    <script>
+
+        const token = localStorage.getItem("token")
+
+        const user = JSON.parse(
+            localStorage.getItem("user")
+        )
+
+        if (!token) {
+
+            window.location.href = "login.html"
+        }
+
+        document.getElementById(
+            "userInfo"
+        ).innerText = `${user.name} (${user.role})`
+
+        async function loadTasks() {
+
+            const response = await fetch(
+                "http://127.0.0.1:5000/tasks",
+                {
+                    method: "GET",
+
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                }
+            )
+
+            const data = await response.json()
+
+            const tasks = data.tasks
+
+            document.getElementById(
+                "taskCount"
+            ).innerText = tasks.length
+
+            const tableBody = document.getElementById(
+                "taskTableBody"
+            )
+
+            tableBody.innerHTML = ""
+
+            tasks.forEach(task => {
+
+                tableBody.innerHTML += `
+
+                <tr>
+                    <td>${task.id}</td>
+                    <td>${task.title}</td>
+                    <td>
+
+    <span class="
+        badge
+        ${task.status === "Completed"
+            ? "bg-success"
+            : "bg-warning"}
+    ">
+
+        ${task.status}
+
+    </span>
+
+</td>
+                    
+                </tr>
+                `
+            })
+        }
+
+        document.getElementById(
+            "projectForm"
+        ).addEventListener("submit", async (e) => {
+
+            e.preventDefault()
+
+            const project_name =
+                document.getElementById(
+                    "projectName"
+                ).value
+
+            const description =
+                document.getElementById(
+                    "projectDescription"
+                ).value
+
+            const response = await fetch(
+                "http://127.0.0.1:5000/projects",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+
+                    body: JSON.stringify({
+                        project_name,
+                        description
+                    })
+                }
+            )
+
+            const data = await response.json()
+
+            alert(data.message)
+document.getElementById(
+    "projectForm"
+).reset()
+        })
+
+        document.getElementById(
+            "taskForm"
+        ).addEventListener("submit", async (e) => {
+
+            e.preventDefault()
+
+            const title =
+                document.getElementById(
+                    "taskTitle"
+                ).value
+
+            const description =
+                document.getElementById(
+                    "taskDescription"
+                ).value
+
+            const assigned_to =
+                document.getElementById(
+                    "assignedTo"
+                ).value
+
+            const project_id =
+                document.getElementById(
+                    "projectId"
+                ).value
+
+            const response = await fetch(
+                "http://127.0.0.1:5000/tasks",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+
+                    body: JSON.stringify({
+                        title,
+                        description,
+                        assigned_to,
+                        project_id
+                    })
+                }
+            )
+
+            const data = await response.json()
+
+            alert(data.message)
+document.getElementById(
+    "taskForm"
+).reset()
+            loadTasks()
+
+        })
+
+        function logout() {
+
+            localStorage.removeItem("token")
+
+            localStorage.removeItem("user")
+
+            window.location.href = "login.html"
+        }
+
+        loadTasks()
+
+    </script>
+
+</body>
+
+</html>
